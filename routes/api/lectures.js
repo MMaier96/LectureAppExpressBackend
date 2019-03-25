@@ -20,7 +20,7 @@ router.param('course', function (req, res, next, course) {
             var lecturesJSON = [];
 
             courseCalendar.forEach(lecture => {
-                if (lecture.SUMMARY !== "")
+                if (lecture.hasOwnProperty("SUMMARY"))
                     lecturesJSON.push({
                         UID: lecture.UID,
                         Location: lecture.LOCATION,
@@ -33,6 +33,8 @@ router.param('course', function (req, res, next, course) {
                         LastModified: moment(lecture["LAST-MODIFIED"]).tz("Europe/Berlin").unix()*1000
                     })
             });
+
+            lecturesJSON.sort((a, b) => parseFloat(a.Start) - parseFloat(b.Start));
 
             req.lectures = lecturesJSON
             return next();

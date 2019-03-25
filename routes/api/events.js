@@ -19,19 +19,34 @@ router.get('/', function (req, res, next) {
             var eventsCalendar = ical2json.convert(d.data).VCALENDAR[0].VEVENT
 
             eventsCalendar.forEach(event => {
-                if (event.SUMMARY !== "")
+                if (event.hasOwnProperty("DTSTART;VALUE=DATE") && event.SUMMARY !== "") {
                     eventsJSON.push({
                         UID: event.UID,
                         Location: event.LOCATION,
                         Description: event.DESCRIPTION,
                         Summary: event.SUMMARY,
-                        OrganisationDay: moment(event["DTSTART;TZID=Europe/Berlin"]).startOf('day').unix() * 1000,
-                        Start: moment(event["DTSTART;TZID=Europe/Berlin"]).tz("Europe/Berlin").unix() * 1000,
-                        End: moment(event["DTEND;TZID=Europe/Berlin"]).tz("Europe/Berlin").unix() * 1000,
+                        OrganisationDay: moment(event["DTSTART;VALUE=DATE"]).startOf('day').unix() * 1000,
+                        Start: moment(event["DTSTART;VALUE=DATE"]).tz("Europe/Berlin").unix() * 1000,
+                        End: moment(event["DTEND;VALUE=DATE"]).tz("Europe/Berlin").unix() * 1000,
+                        Creation: moment(event["CREATED"]).tz("Europe/Berlin").unix() * 1000,
+                        LastModified: moment(event["LAST-MODIFIED"]).tz("Europe/Berlin").unix() * 1000
+                    })
+                }  
+                else if (event.hasOwnProperty("DTSTART") && event.SUMMARY !== "")
+                    eventsJSON.push({
+                        UID: event.UID,
+                        Location: event.LOCATION,
+                        Description: event.DESCRIPTION,
+                        Summary: event.SUMMARY,
+                        OrganisationDay: moment(event["DTSTART"]).startOf('day').unix() * 1000,
+                        Start: moment(event["DTSTART"]).tz("Europe/Berlin").unix() * 1000,
+                        End: moment(event["DTEND"]).tz("Europe/Berlin").unix() * 1000,
                         Creation: moment(event["CREATED"]).tz("Europe/Berlin").unix() * 1000,
                         LastModified: moment(event["LAST-MODIFIED"]).tz("Europe/Berlin").unix() * 1000
                     })
             });
+
+            eventsJSON.sort((a, b) => parseFloat(a.Start) - parseFloat(b.Start));
 
             return res.json(eventsJSON)
         })
@@ -51,23 +66,38 @@ router.get('/byDay', function (req, res, next) {
             var eventsCalendar = ical2json.convert(d.data).VCALENDAR[0].VEVENT
 
             eventsCalendar.forEach(event => {
-                if (event.SUMMARY !== "")
+                if (event.hasOwnProperty("DTSTART;VALUE=DATE") && event.hasOwnProperty("SUMMARY")) {
                     eventsJSON.push({
                         UID: event.UID,
                         Location: event.LOCATION,
                         Description: event.DESCRIPTION,
                         Summary: event.SUMMARY,
-                        OrganisationDay: moment(event["DTSTART;TZID=Europe/Berlin"]).startOf('day').unix() * 1000,
-                        Start: moment(event["DTSTART;TZID=Europe/Berlin"]).tz("Europe/Berlin").unix() * 1000,
-                        End: moment(event["DTEND;TZID=Europe/Berlin"]).tz("Europe/Berlin").unix() * 1000,
+                        OrganisationDay: moment(event["DTSTART;VALUE=DATE"]).startOf('day').unix() * 1000,
+                        Start: moment(event["DTSTART;VALUE=DATE"]).tz("Europe/Berlin").unix() * 1000,
+                        End: moment(event["DTEND;VALUE=DATE"]).tz("Europe/Berlin").unix() * 1000,
+                        Creation: moment(event["CREATED"]).tz("Europe/Berlin").unix() * 1000,
+                        LastModified: moment(event["LAST-MODIFIED"]).tz("Europe/Berlin").unix() * 1000
+                    })
+                }  
+                else if (event.hasOwnProperty("DTSTART") && event.hasOwnProperty("SUMMARY"))
+                    eventsJSON.push({
+                        UID: event.UID,
+                        Location: event.LOCATION,
+                        Description: event.DESCRIPTION,
+                        Summary: event.SUMMARY,
+                        OrganisationDay: moment(event["DTSTART"]).startOf('day').unix() * 1000,
+                        Start: moment(event["DTSTART"]).tz("Europe/Berlin").unix() * 1000,
+                        End: moment(event["DTEND"]).tz("Europe/Berlin").unix() * 1000,
                         Creation: moment(event["CREATED"]).tz("Europe/Berlin").unix() * 1000,
                         LastModified: moment(event["LAST-MODIFIED"]).tz("Europe/Berlin").unix() * 1000
                     })
             });
 
+            eventsJSON.sort((a, b) => a.Start - b.Start);
+
             var eventsByDay = eventsJSON.groupBy('OrganisationDay')
             return res.json(eventsByDay)
-            
+
         })
         .catch(next);
 });
